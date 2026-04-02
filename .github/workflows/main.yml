@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Source Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Build Environment (Packages)
       run: |
@@ -53,7 +53,7 @@ jobs:
         make O=out ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 -j$(nproc)
 
     - name: Upload Kernel Image
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: NetHunter-Kernel-Diting
         path: out/arch/arm64/boot/Image

@@ -2,10 +2,13 @@ name: Build NetHunter Kernel (Xiaomi 12T Pro)
 on:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     name: Build Kernel
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout Source Code
       uses: actions/checkout@v4
@@ -15,7 +18,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python3
 
-    - name: Download Custom Clang 14 (No Compiler Errors)
+    - name: Download Custom Clang 14
       run: |
         mkdir -p clang
         cd clang
@@ -25,30 +28,23 @@ jobs:
 
     - name: Inject NetHunter & BadUSB Drivers
       run: |
-        # Diting (12T Pro) ki GKI config file jo list mein hai
         DEFCONFIG="vendor/diting_GKI.config"
         
-        # 1. Monitor Mode aur Mac80211
         echo "CONFIG_MAC80211=y" >> arch/arm64/configs/$DEFCONFIG
         echo "CONFIG_CFG80211_WEXT=y" >> arch/arm64/configs/$DEFCONFIG
-        
-        # 2. TP-Link RT5370 ke Drivers
         echo "CONFIG_RT2X00=y" >> arch/arm64/configs/$DEFCONFIG
         echo "CONFIG_RT2800USB=y" >> arch/arm64/configs/$DEFCONFIG
-        
-        # 3. BadUSB (RNDIS) ke Drivers
         echo "CONFIG_USB_NET_RNDIS=y" >> arch/arm64/configs/$DEFCONFIG
         echo "CONFIG_USB_CONFIGFS_F_RNDIS=y" >> arch/arm64/configs/$DEFCONFIG
         echo "CONFIG_USB_DUMMY_HCD=y" >> arch/arm64/configs/$DEFCONFIG
 
-    - name: Compile Kernel (With LLVM for 5.10 Kernels)
+    - name: Compile Kernel
       run: |
         export PATH="$GITHUB_WORKSPACE/clang/bin:$PATH"
         export ARCH=arm64
         export SUBARCH=arm64
         export CC=clang
         
-        # Exact us file ka naam diya jo list mein hai
         make O=out ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 vendor/diting_GKI.config
         make O=out ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 -j$(nproc)
 
